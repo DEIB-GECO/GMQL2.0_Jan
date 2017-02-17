@@ -32,12 +32,14 @@ import it.polimi.genomics.spark.implementation.RegionsOperators.SelectRegions.Te
 import it.polimi.genomics.spark.implementation.RegionsOperators._
 import it.polimi.genomics.spark.implementation.loaders._
 import org.apache.hadoop.fs.Path
-import org.apache.spark.rdd.{RDD, ShuffledRDD}
-import org.apache.spark.{HashPartitioner, Partitioner, SparkConf, SparkContext}
+import org.apache.spark.rdd.RDD
+import org.apache.spark.{HashPartitioner, SparkContext}
 import org.slf4j.LoggerFactory
 
 import scala.xml.Elem
 import it.polimi.genomics.repository.RepositoryManagerV2
+
+import scala.collection.Map
 
 class GMQLSparkExecutor(val defaultBinSize : Long = 50000, val maxBinDistance : Int = 100000, REF_PARALLILISM: Int = 20,testingIOFormats:Boolean = false ,sc:SparkContext, GTFoutput:Boolean = false) extends Implementation with java.io.Serializable{
 
@@ -130,36 +132,45 @@ class GMQLSparkExecutor(val defaultBinSize : Long = 50000, val maxBinDistance : 
 
 
           val Ids = metaRDD.keys.distinct()
+          val newIDS: Map[Long, Long] = Ids.zipWithIndex().collectAsMap()
+          val newIDSbroad = sc.broadcast(newIDS)
+
           val regionsPartitioner = new HashPartitioner(Ids.count.toInt)
 
           val keyedRDD = if(!GTFoutput){
-             regionRDD.partitionBy(regionsPartitioner).map(x => (outSample+"_"+x._1._1.toString+".gdm", x._1._2 + "\t" + x._1._3 + "\t" + x._1._4 + "\t" + x._1._5 + "\t" + x._2.mkString("\t"))).partitionBy(regionsPartitioner)
-          }else{
+            regionRDD.map(x => (outSample+"_"+ "%05d".format(newIDSbroad.value.get(x._1._1).get)+".gdm",
+              x._1._2 + "\t" + x._1._3 + "\t" + x._1._4 + "\t" + x._1._5 + "\t" + x._2.mkString("\t")))
+              .partitionBy(regionsPartitioner).mapPartitions(x=>x.toList.sortBy{s=> val data = s._2.split("\t"); (data(0),data(1).toLong,data(2).toLong)}.iterator)
+          }else {
             val jobname = outputFolderName
-            val score= variable.schema.zipWithIndex.filter(x=>x._1._1.toLowerCase().equals("score"))
-            val scoreIndex = if(score.size>0) score(0)._2 else -1
-            regionRDD.map{x =>
-              val values = variable.schema.zip(x._2).flatMap{s=>if(s._1._1.equals("score")) None else Some(s._1._1+" \""+s._2+"\";")}.mkString(" ")
-              (outSample+"_"+x._1._1.toString+".gtf",
-                x._1._2                                                                  //chrom
-//                  + "\t" + jobname.substring(jobname.lastIndexOf("_")+1,jobname.length)   //variable name
-                  + "\t" + "GMQL"   //variable name
-                  + "\t" +"Region"
-                  + "\t" +x._1._3 + "\t" + x._1._4 + "\t"                                 //start , stop
-                  + {if(scoreIndex>=0) x._2(scoreIndex) else "0.0"}                       //score
-                  +"\t" + (if(x._1._5.equals('*')) '.' else x._1._5)  + "\t"                                                  //strand
-                  +"."                                                                  //frame
+            val score = variable.schema.zipWithIndex.filter(x => x._1._1.toLowerCase().equals("score"))
+            val scoreIndex = if (score.size > 0) score(0)._2 else -1
+            regionRDD.map { x =>
+              val values = variable.schema.zip(x._2).flatMap { s => if (s._1._1.equals("score")) None else Some(s._1._1 + " \"" + s._2 + "\";") }.mkString(" ")
+              (outSample + "_" + "%05d".format(newIDSbroad.value.get(x._1._1).get) + ".gtf",
+                x._1._2 //chrom
+                  //                  + "\t" + jobname.substring(jobname.lastIndexOf("_")+1,jobname.length)   //variable name
+                  + "\t" + "GMQL" //variable name
+                  + "\t" + "Region"
+                  + "\t" + x._1._3 + "\t" + x._1._4 + "\t" //start , stop
+                  + {
+                  if (scoreIndex >= 0) x._2(scoreIndex) else "0.0"
+                } //score
+                  + "\t" + (if (x._1._5.equals('*')) '.' else x._1._5) + "\t" //strand
+                  + "." //frame
                   + "\t" + values
-                )
+              )
             }.partitionBy(regionsPartitioner)
+              .mapPartitions(x=>x.toList.sortBy{s=> val data = s._2.split("\t"); (data(0),data(3).toLong,data(4).toLong)}.iterator)
           }
 
           writeMultiOutputFiles.saveAsMultipleTextFiles(keyedRDD, RegionOutputPath)
 
-          val metaKeyValue = if(!GTFoutput){
-            metaRDD.map(x => (outSample+"_"+x._1.toString + ".gdm.meta", x._2._1 + "\t" + x._2._2)).repartition(1).sortBy(x=>(x._1,x._2))
+
+          val metaKeyValue = if(!GTFoutput ){
+            metaRDD.map(x => (outSample+"_"+ "%05d".format(newIDSbroad.value.get(x._1).get) + ".gdm.meta", x._2._1 + "\t" + x._2._2)).repartition(1).sortBy(x=>(x._1,x._2))
           }else{
-            metaRDD.map(x => (outSample+"_"+x._1.toString + ".gtf.meta", x._2._1 + "\t" + x._2._2)).repartition(1).sortBy(x=>(x._1,x._2))
+            metaRDD.map(x => (outSample+"_"+ "%05d".format(newIDSbroad.value.get(x._1)) + ".gtf.meta", x._2._1 + "\t" + x._2._2)).repartition(1).sortBy(x=>(x._1,x._2))
           }
           writeMultiOutputFiles.saveAsMultipleTextFiles(metaKeyValue, MetaOutputPath)
 
@@ -408,7 +419,7 @@ class GMQLSparkExecutor(val defaultBinSize : Long = 50000, val maxBinDistance : 
 
   def generateSchema(schema : List[(String, PARSING_TYPE)]): String ={
     val schemaPart = if(GTFoutput) {
-      "      <gmqlSchema type=\"gtf\">\n"+
+      "\t<gmqlSchema type=\"gtf\">\n"+
       "           <field type=\"STRING\">seqname</field>\n" +
         "           <field type=\"STRING\">source</field>\n"+
         "           <field type=\"STRING\">feature</field>\n"+
@@ -435,7 +446,7 @@ class GMQLSparkExecutor(val defaultBinSize : Long = 50000, val maxBinDistance : 
             if(GTFoutput && x._1.toLowerCase() == "score") None
             else Some("           <field type=\"" + x._2.toString + "\">" + x._1 + "</field>")
         }.mkString("\n") +
-          "\n</gmqlSchema>\n" +
+          "\n\t</gmqlSchema>\n" +
      "</gmqlSchemaCollection>"
 
 

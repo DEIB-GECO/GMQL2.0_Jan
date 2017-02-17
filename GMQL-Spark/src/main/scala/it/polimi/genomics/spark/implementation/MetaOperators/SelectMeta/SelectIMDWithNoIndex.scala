@@ -150,7 +150,7 @@ object SelectIMDWithNoIndex {
 
       val searchRes = searchIndex(query, index)
       if (searchRes.isDefined)
-        sparkContext.parallelize(searchRes.get.split(",").map(x => Hashing.md5().newHasher().putString(x.replaceAll("/", ""), StandardCharsets.UTF_8).hash().asLong()))
+        sparkContext.parallelize(searchRes.get.split(",").map(x => Hashing.md5().newHasher().putString(new Path(x).getName, StandardCharsets.UTF_8).hash().asLong()))
       else
         sparkContext.emptyRDD[ID]
     }
@@ -163,7 +163,7 @@ object SelectIMDWithNoIndex {
       if (searchRes.isDefined) {
         sparkContext.parallelize {
           searchRes.get.split(",").flatMap { x => /*println ("eq",x,getURI(x),Hashing.md5().newHasher().putString(getURI(x),StandardCharsets.UTF_8).hash().asLong());*/
-            if (!x.isEmpty) Some(Hashing.md5().newHasher().putString(getURI(x).replaceAll("/", ""), StandardCharsets.UTF_8).hash().asLong()) else None
+            if (!x.isEmpty) Some(Hashing.md5().newHasher().putString(new Path(getURI(x)).getName , StandardCharsets.UTF_8).hash().asLong()) else None
           }
         }
       } else
@@ -171,10 +171,11 @@ object SelectIMDWithNoIndex {
     }
 
     def getURI(uri: String) = {
-      if (Utilities.getInstance().MODE == "MAPREDUCE" && !uri.startsWith("hdfs")) {
-        val hdfsuri = Utilities.getInstance().gethdfsConfiguration().get("fs.defaultFS") + Utilities.getInstance().HDFSRepoDir + username + "/regions" + uri
-        hdfsuri.substring(hdfsuri.indexOf(":") + 1, hdfsuri.size)
-      } else uri
+//      if (Utilities.getInstance().MODE == "MAPREDUCE" && !uri.startsWith("hdfs")) {
+//        val hdfsuri = Utilities.getInstance().gethdfsConfiguration().get("fs.defaultFS") + Utilities.getInstance().HDFSRepoDir + username + "/regions" + uri
+//        hdfsuri.substring(hdfsuri.indexOf(":") + 1, hdfsuri.size)
+//      } else
+    uri
     }
 
     @throws[SelectFormatException]
@@ -183,7 +184,7 @@ object SelectIMDWithNoIndex {
 
       val searchRes = searchIndex(query, index)
       if (searchRes.isDefined)
-        sparkContext.parallelize(searchRes.get.split(",").map(x => Hashing.md5().newHasher().putString(getURI(x).replaceAll("/", ""), StandardCharsets.UTF_8).hash().asLong()))
+        sparkContext.parallelize(searchRes.get.split(",").map(x => Hashing.md5().newHasher().putString(new Path(getURI(x)).getName, StandardCharsets.UTF_8).hash().asLong()))
       else
         sparkContext.emptyRDD[ID]
     }
