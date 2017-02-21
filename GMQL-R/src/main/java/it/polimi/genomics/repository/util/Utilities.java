@@ -43,7 +43,7 @@ public class Utilities {
     public static final String LOCAL = "LOCAL";
     public final String RepoDir;
     public String HDFSRepoDir = "";
-    public final String MODE;
+    public String MODE;
     public String CoreConfigurationFiles = "";
     public String HDFSConfigurationFiles = "";
     public final String GMQLHOME;

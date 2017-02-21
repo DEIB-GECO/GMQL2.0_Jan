@@ -266,19 +266,20 @@ class CustomParser extends BedParser("\t", 0, 1, 2, Some(3), Some(Array((4, Pars
   def setSchema(dataset: String, username :String = Utilities.USERNAME): BedParser = {
 
     val hdfs = Utilities.getInstance().getFileSystem
-    val XMLfile:InputStream = if(dataset.startsWith("hdfs")|| dataset.startsWith(Utilities.getInstance().HDFSRepoDir))
-      hdfs.open(new org.apache.hadoop.fs.Path(dataset+"/test.schema"))
-//    else if (new File(dataset).exists()) {
-//      new FileInputStream(new File(dataset+"test.schema"))
-//    }
-    else if (dataset.contains("/")) {
-      hdfs.open(new org.apache.hadoop.fs.Path(Utilities.getInstance().gethdfsConfiguration().get("fs.defaultFS")
-        +Utilities.getInstance().HDFSRepoDir + username + "/regions" +
-        dataset+"/test.schema"))
-    } else if(!Utilities.getInstance().checkDSNameinPublic(dataset))
-        new FileInputStream(new File(Utilities.getInstance().RepoDir+username+"/schema/"+dataset+".schema"))
-    else
-      new FileInputStream(new File(Utilities.getInstance().RepoDir+"public"+"/schema/"+dataset+".schema"))
+    val XMLfile:InputStream = new FileInputStream(new File(dataset + "/test.schema"))
+//      if(dataset.startsWith("hdfs")|| dataset.startsWith(Utilities.getInstance().HDFSRepoDir))
+//      hdfs.open(new org.apache.hadoop.fs.Path(dataset+"/test.schema"))
+////    else if (new File(dataset).exists()) {
+////      new FileInputStream(new File(dataset+"test.schema"))
+////    }
+//    else if (dataset.contains("/")) {
+//      hdfs.open(new org.apache.hadoop.fs.Path(Utilities.getInstance().gethdfsConfiguration().get("fs.defaultFS")
+//        +Utilities.getInstance().HDFSRepoDir + username + "/regions" +
+//        dataset+"/test.schema"))
+//    } else if(!Utilities.getInstance().checkDSNameinPublic(dataset))
+//        new FileInputStream(new File(Utilities.getInstance().RepoDir+username+"/schema/"+dataset+".schema"))
+//    else
+//      new FileInputStream(new File(Utilities.getInstance().RepoDir+"public"+"/schema/"+dataset+".schema"))
 
 //    println ("HI ",dataset,Utilities.getInstance().gethdfsConfiguration().get("fs.defaultFS") +Utilities.getInstance().HDFSRepoDir + Utilities.USERNAME + "/regions" + dataset+"/test.schema")
 

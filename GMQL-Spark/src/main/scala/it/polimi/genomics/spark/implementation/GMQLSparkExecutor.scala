@@ -1,4 +1,4 @@
-package it.polimi.genomics.spark.implementation
+  package it.polimi.genomics.spark.implementation
 
 /**
  * Created by Abdulrahman Kaitoua on 27/05/15.
@@ -38,6 +38,7 @@ import org.slf4j.LoggerFactory
 
 import scala.xml.Elem
 import it.polimi.genomics.repository.RepositoryManagerV2
+import org.apache.spark.broadcast.Broadcast
 
 import scala.collection.Map
 
@@ -105,17 +106,19 @@ class GMQLSparkExecutor(val defaultBinSize : Long = 50000, val maxBinDistance : 
 
         }else {
           val fs = Utilities.getInstance().gethdfsConfiguration().get("fs.defaultFS")
-          val MetaOutputPath = if (Utilities.getInstance.MODE == Utilities.HDFS) {
-            fs + Utilities.getInstance().HDFSRepoDir + Utilities.USERNAME + "/regions/" + variable.metaDag.asInstanceOf[IRStoreMD].path.toString + "/meta/"
-          } else {
-            Utilities.getInstance().RepoDir + Utilities.USERNAME + "/regions/" + variable.metaDag.asInstanceOf[IRStoreMD].path.toString + "/meta/"
-          }
-          val RegionOutputPath = if (Utilities.getInstance.MODE == Utilities.HDFS) {
-            fs + Utilities.getInstance().HDFSRepoDir + Utilities.USERNAME + "/regions/" + variable.regionDag.asInstanceOf[IRStoreRD].path.toString + "/exp/"
-          }
-          else {
-            Utilities.getInstance().RepoDir + Utilities.USERNAME + "/regions/" + variable.regionDag.asInstanceOf[IRStoreRD].path.toString + "/exp/"
-          }
+          val MetaOutputPath = variable.metaDag.asInstanceOf[IRStoreMD].path.toString + "/meta/"
+//          if (Utilities.getInstance.MODE == Utilities.HDFS) {
+//            fs + Utilities.getInstance().HDFSRepoDir + Utilities.USERNAME + "/regions/" + variable.metaDag.asInstanceOf[IRStoreMD].path.toString + "/meta/"
+//          } else {
+//            Utilities.getInstance().RepoDir + Utilities.USERNAME + "/regions/" + variable.metaDag.asInstanceOf[IRStoreMD].path.toString + "/meta/"
+//          }
+          val RegionOutputPath = variable.regionDag.asInstanceOf[IRStoreRD].path.toString + "/exp/"
+//          if (Utilities.getInstance.MODE == Utilities.HDFS) {
+//            fs + Utilities.getInstance().HDFSRepoDir + Utilities.USERNAME + "/regions/" + variable.regionDag.asInstanceOf[IRStoreRD].path.toString + "/exp/"
+//          }
+//          else {
+//            Utilities.getInstance().RepoDir + Utilities.USERNAME + "/regions/" + variable.regionDag.asInstanceOf[IRStoreRD].path.toString + "/exp/"
+//          }
 
 
           logger.debug(MetaOutputPath)

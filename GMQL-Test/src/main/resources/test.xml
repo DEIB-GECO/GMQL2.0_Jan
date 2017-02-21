@@ -1,0 +1,217 @@
+<gmql_new_test>
+    <general_config>
+        <execution_script>/home/canakoglu/GMQL-test/GMQL/bin/GMQL-Submit</execution_script>
+        <root_folder type="LOCAL">/home/canakoglu/GMQL-test/</root_folder>
+        <temp_folder type="LOCAL">/tmp/gmql_testing/</temp_folder>
+        <!--not tested for hadoop-->
+        <root_folder type="HADOOP">hdfs://</root_folder>
+        <default_location_type>LOCAL</default_location_type>
+    </general_config>
+    <datasets>
+        <dataset name="annotations_in">
+            <location type="LOCAL">datasets/in/annotations</location>
+        </dataset>
+        <dataset name="annotations_out">
+            <location type="LOCAL">datasets/out/annotations</location>
+        </dataset>
+        <dataset name="beds_in">
+            <location type="LOCAL">datasets/in/beds</location>
+        </dataset>
+        <dataset name="beds_out">
+            <location type="LOCAL">datasets/out/beds</location>
+        </dataset>
+        <dataset name="beds_out_no_result">
+            <location type="LOCAL">datasets/out/beds_no_result</location>
+        </dataset>
+        <dataset name="beds_out_CTCF">
+            <location type="LOCAL">datasets/out/beds_CTCF</location>
+        </dataset>
+        <dataset name="cover_1_1">
+            <location type="LOCAL">datasets/out/cover_1_1</location>
+        </dataset>
+        <dataset name="cover_1_2">
+            <location type="LOCAL">datasets/out/cover_1_2</location>
+        </dataset>
+        <dataset name="cover_2_2">
+            <location type="LOCAL">datasets/out/cover_2_2</location>
+        </dataset>
+        <dataset name="cover_1_ANY">
+            <location type="LOCAL">datasets/out/cover_1_ANY</location>
+        </dataset>
+        <dataset name="cover_1_ALL">
+            <location type="LOCAL">datasets/out/cover_1_ALL</location>
+        </dataset>
+        <dataset name="cover_ANY_ANY">
+            <location type="LOCAL">datasets/out/cover_ANY_ANY</location>
+        </dataset>
+        <dataset name="cover_ANY_ALL">
+            <location type="LOCAL">datasets/out/cover_ANY_ALL</location>
+        </dataset>
+        <dataset name="cover_ALL_ANY">
+            <location type="LOCAL">datasets/out/cover_ALL_ANY</location>
+        </dataset>
+    </datasets>
+    <queries>
+        <!--target is targeting operation if it is singleton, empty otherwise-->
+        <!--Time should be always defined-->
+        <query name="select_1" time="short" target="select">
+            <description>basic select and materialize test, with one sample</description>
+            <tags>
+                <tag>SELECT</tag>
+            </tags>
+            <text>
+                R = SELECT() #INPUT%annotations_in#;
+                MATERIALIZE R into #OUTPUT%annotations_out#;
+            </text>
+        </query>
+        <query name="select_2" time="short" target="select">
+            <description>basic select and materialize test, with parameter NOT</description>
+            <tags>
+                <tag>SELECT</tag>
+            </tags>
+            <text>
+                R = SELECT(NOT(leaveout=="something")) #INPUT%annotations_in#;
+                MATERIALIZE R into #OUTPUT%annotations_out#;
+            </text>
+        </query>
+        <query name="select_3" time="short" target="select">
+            <description>basic select and materialize test, with multiple samples</description>
+            <tags>
+                <tag>SELECT</tag>
+            </tags>
+            <text>
+                R = SELECT() #INPUT%beds_in#;
+                MATERIALIZE R into #OUTPUT%beds_out#;
+            </text>
+        </query>
+        <query name="select_4" time="short" target="select">
+            <description>basic select and materialize test, with parameter NOT and materialize two times</description>
+            <tags>
+                <tag>SELECT</tag>
+            </tags>
+            <text>
+                R = SELECT() #INPUT%beds_in#;
+                MATERIALIZE R into #OUTPUT%beds_out#;
+                MATERIALIZE R into #OUTPUT%beds_out#;
+            </text>
+        </query>
+        <query name="select_5" time="short" target="select">
+            <description>without any result</description>
+            <tags>
+                <tag>SELECT</tag>
+            </tags>
+            <text>
+                R = SELECT(leaveout=="something") #INPUT%beds_in#;
+                MATERIALIZE R into #OUTPUT%beds_out_no_result#;
+            </text>
+        </query>
+        <query name="select_6" time="short" target="select">
+            <description>only CTCF</description>
+            <tags>
+                <tag>SELECT</tag>
+            </tags>
+            <text>
+                R = SELECT(antibody=="CTCF") #INPUT%beds_in#;
+                MATERIALIZE R into #OUTPUT%beds_out_CTCF#;
+            </text>
+        </query>
+        <query name="cover_0" time="short" target="cover">
+            <description>COVER(1,1)</description>
+            <tags>
+                <tag>SELECT</tag>
+                <tag>COVER</tag>
+                <tag>HELLO</tag>
+            </tags>
+            <text>
+                E = SELECT(NOT(leaveout=="something")) #INPUT%beds_in#;
+                C = COVER(1,1) E;
+                MATERIALIZE C into #OUTPUT%cover_1_1#;
+            </text>
+        </query>
+        <query name="cover_1" time="short" target="cover">
+            <description>COVER(1,2)</description>
+            <tags>
+                <tag>SELECT</tag>
+                <tag>COVER</tag>
+                <tag>HELLO</tag>
+            </tags>
+            <text>
+                E = SELECT(NOT(leaveout=="something")) #INPUT%beds_in#;
+                C = COVER(1,2) E;
+                MATERIALIZE C into #OUTPUT%cover_1_2#;
+            </text>
+        </query>
+        <query name="cover_2" time="short" target="cover">
+            <description>COVER(2,2)</description>
+            <tags>
+                <tag>SELECT</tag>
+                <tag>COVER</tag>
+            </tags>
+            <text>
+                E = SELECT(NOT(leaveout=="something")) #INPUT%beds_in#;
+                C = COVER(2,2) E;
+                MATERIALIZE C into #OUTPUT%cover_2_2#;
+            </text>
+        </query>
+        <query name="cover_3" time="short" target="cover">
+            <description>COVER(1,ANY)</description>
+            <tags>
+                <tag>SELECT</tag>
+                <tag>COVER</tag>
+            </tags>
+            <text>
+                E = SELECT(NOT(leaveout=="something")) #INPUT%beds_in#;
+                C = COVER(1,ANY) E;
+                MATERIALIZE C into #OUTPUT%cover_1_ANY#;
+            </text>
+        </query>
+        <query name="cover_4" time="short" target="cover">
+            <description>COVER(1,ALL)</description>
+            <tags>
+                <tag>SELECT</tag>
+                <tag>COVER</tag>
+            </tags>
+            <text>
+                E = SELECT(NOT(leaveout=="something")) #INPUT%beds_in#;
+                C = COVER(1,ALL) E;
+                MATERIALIZE C into #OUTPUT%cover_1_ALL#;
+            </text>
+        </query>
+        <query name="cover_5" time="short" target="cover">
+            <description>COVER(ANY,ANY)</description>
+            <tags>
+                <tag>SELECT</tag>
+                <tag>COVER</tag>
+            </tags>
+            <text>
+                E = SELECT(NOT(leaveout=="something")) #INPUT%beds_in#;
+                C = COVER(ANY,ANY) E;
+                MATERIALIZE C into #OUTPUT%cover_ANY_ANY#;
+            </text>
+        </query>
+        <query name="cover_6" time="short" target="cover">
+            <description>COVER(ANY,ALL)</description>
+            <tags>
+                <tag>SELECT</tag>
+                <tag>COVER</tag>
+            </tags>
+            <text>
+                E = SELECT(NOT(leaveout=="something")) #INPUT%beds_in#;
+                C = COVER(ANY,ALL) E;
+                MATERIALIZE C into #OUTPUT%cover_ANY_ALL#;
+            </text>
+        </query>
+        <query name="cover_7" time="short" target="cover">
+            <description>COVER(ALL,ANY)</description>
+            <tags>
+                <tag>SELECT</tag>
+                <tag>COVER</tag>
+            </tags>
+            <text>
+                E = SELECT(NOT(leaveout=="something")) #INPUT%beds_in#;
+                C = COVER(ALL,ANY) E;
+                MATERIALIZE C into #OUTPUT%cover_ALL_ANY#;
+            </text>
+        </query>
+    </queries>
+</gmql_new_test>
