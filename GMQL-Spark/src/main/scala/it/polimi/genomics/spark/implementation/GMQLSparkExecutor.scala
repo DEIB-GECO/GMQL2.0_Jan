@@ -1,3 +1,4 @@
+
 package it.polimi.genomics.spark.implementation
 
 /**
@@ -138,7 +139,7 @@ class GMQLSparkExecutor(val defaultBinSize : Long = 50000, val maxBinDistance : 
           val regionsPartitioner = new HashPartitioner(Ids.count.toInt)
 
           val keyedRDD = if(!GTFoutput){
-            regionRDD.map(x => (outSample+"_"+ "%05d".format(newIDSbroad.value.get(x._1._1).get)+".gdm",
+            regionRDD.map(x => (outSample+"_"+ "%05d".format(newIDSbroad.value.get(x._1._1).getOrElse(x._1._1))+".gdm",
               x._1._2 + "\t" + x._1._3 + "\t" + x._1._4 + "\t" + x._1._5 + "\t" + x._2.mkString("\t")))
               .partitionBy(regionsPartitioner).mapPartitions(x=>x.toList.sortBy{s=> val data = s._2.split("\t"); (data(0),data(1).toLong,data(2).toLong)}.iterator)
           }else {
@@ -147,7 +148,7 @@ class GMQLSparkExecutor(val defaultBinSize : Long = 50000, val maxBinDistance : 
             val scoreIndex = if (score.size > 0) score(0)._2 else -1
             regionRDD.map { x =>
               val values = variable.schema.zip(x._2).flatMap { s => if (s._1._1.equals("score")) None else Some(s._1._1 + " \"" + s._2 + "\";") }.mkString(" ")
-              (outSample + "_" + "%05d".format(newIDSbroad.value.get(x._1._1).get) + ".gtf",
+              (outSample + "_" + "%05d".format(newIDSbroad.value.get(x._1._1).getOrElse(x._1._1)) + ".gtf",
                 x._1._2 //chrom
                   //                  + "\t" + jobname.substring(jobname.lastIndexOf("_")+1,jobname.length)   //variable name
                   + "\t" + "GMQL" //variable name
